@@ -11,9 +11,13 @@
 #include <signal.h>
 
 #define MAX_CLIENT 100
+#define SO_REUSEPORT 15
 #define BUFFER_SIZE 2048
 
-int main (int argc, char *argv) {
+static _Atomic unsigned int cli_count = 0;
+static int uid = 10;
+
+int main (int argc, char *argv[1]) {
     if (argc != 2) {
         printf("Usage: %s <port\n>",argv[0]);
         return EXIT_FAILURE;
@@ -38,11 +42,32 @@ int main (int argc, char *argv) {
     signal(SIGPIPE, SIG_IGN);
 
     if (setsockopt(listenfd, SOL_SOCKET, (SO_REUSEADDR | SO_REUSEPORT), (char*)&option, sizeof(option)) < 0){
-        printf('ERROR: setsockopt\n');
+        printf("ERROR: setsockopt\n");
         return EXIT_FAILURE;
     }
 
-    if bind()
+    if (bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        printf("Error: bind\n");
+        return EXIT_FAILURE;
+    }
 
+    if (listen(listenfd, 10) < 0){
+        printf("Error: listen\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("=== Welcome to Chat room ==\n");
+
+    while (1) {
+        socklen_t clilen = sizeof(cli_addr);
+        connfd = accept(listenfd, (struct sockaddr *)&cli_addr, clilen);
+    }
+
+    if ((cli_count + 1) == MAX_CLIENT){
+        printf("Maximum clients connected. Connection Rejected!!!");
+        print_ip_addr(cli_addr);
+        close(connfd);
+        return EXIT_FAILURE;
+    }
 
 }
