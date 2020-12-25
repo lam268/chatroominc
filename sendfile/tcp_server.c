@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 		while (1) {
 			status = recv_file(conn_sock);
 			if (status != 0){
-				return EXIT_FAILURE;
+				break;
 			}
 		}
 		close(conn_sock);

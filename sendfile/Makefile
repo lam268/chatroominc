@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -pthread
 
 client: tcp_client.c
 	${CC} ${CFLAGS} tcp_client.c -o client
