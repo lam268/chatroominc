@@ -96,7 +96,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    char *ip = "127.0.0.1";
+    char *ip = "192.168.43.196";
     int port = atoi(argv[1]);
     int listenfd;
 
@@ -117,9 +117,8 @@ int main(int argc, char **argv)
     /* Socket settings */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(ip);
     server_addr.sin_port = htons(port);
-
+    inet_pton(AF_INET, ip, &server_addr.sin_addr);
     // Connect to Server
     int err = connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (err == -1)
