@@ -27,151 +27,151 @@ static int uid = 10;
 
 void clean_and_restore(FILE **fp)
 {
-	if (*fp != NULL)
-		fclose(*fp);
-	chdir("../..");
+    if (*fp != NULL)
+        fclose(*fp);
+    chdir("../..");
 }
 
 int recv_file(int conn_sock)
 {
-	struct stat st;
-	int size_file;
-	char recv_data[BUFF_SIZE];
-	int bytes_sent, bytes_received;
-	char dir_name[] = "destination";
-	char *tok;
-	FILE *fp = NULL;
-	int nLeft, idx;
+    struct stat st;
+    int size_file;
+    char recv_data[BUFF_SIZE];
+    int bytes_sent, bytes_received;
+    char dir_name[] = "destination";
+    char *tok;
+    FILE *fp = NULL;
+    int nLeft, idx;
 
-	// check if directory exists, if not mkdir
-	if (stat(dir_name, &st) == -1)
-	{
-		tok = strtok(dir_name, "/");
-		while (tok != NULL)
-		{
-			mkdir(tok, 0700); //config permissions by changing 2nd argument
-			chdir(tok);		  // chdir ~ cd
-			tok = strtok(NULL, "/");
-		}
-	}
-	else
-		chdir(dir_name);
+    // check if directory exists, if not mkdir
+    if (stat(dir_name, &st) == -1)
+    {
+        tok = strtok(dir_name, "/");
+        while (tok != NULL)
+        {
+            mkdir(tok, 0700); //config permissions by changing 2nd argument
+            chdir(tok);       // chdir ~ cd
+            tok = strtok(NULL, "/");
+        }
+    }
+    else
+        chdir(dir_name);
 
-	//receives file name
-	bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
-	if (bytes_received <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return -1; //meet error, aborted
-	}
-	else
-		recv_data[bytes_received] = '\0'; // check with client send format
+    //receives file name
+    bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return -1; //meet error, aborted
+    }
+    else
+        recv_data[bytes_received] = '\0'; // check with client send format
 
-	if (recv_data[0] == '\0')
-	{
-		printf("Receiving data from client end. Exiting.\n");
-		clean_and_restore(&fp);
-		return 1;
-	}
+    if (recv_data[0] == '\0')
+    {
+        printf("Receiving data from client end. Exiting.\n");
+        clean_and_restore(&fp);
+        return 1;
+    }
 
-	if (strcmp(recv_data, MSG_CLOSE) == 0)
-	{ //file not found on client
-		printf("No file found on client. Transmission aborted.\n");
-		clean_and_restore(&fp);
-		return -1;
-	}
+    if (strcmp(recv_data, MSG_CLOSE) == 0)
+    { //file not found on client
+        printf("No file found on client. Transmission aborted.\n");
+        clean_and_restore(&fp);
+        return -1;
+    }
 
-	// check if file exists, if not create new one, else return error
-	// already at destination folder
-	// echo to client
-	if (stat(recv_data, &st) == -1)
-	{ // file does not exist
-		fp = fopen(recv_data, "wb");
-		if (fp == NULL)
-		{
-			printf("File path error\n");
-			clean_and_restore(&fp);
-			return -1;
-		}
-		bytes_sent = send(conn_sock, MSG_RECV, strlen(MSG_RECV), 0); //echo that received file name and no duplicate file on server
-		if (bytes_sent <= 0)
-		{
-			printf("Connection closed\n");
-			clean_and_restore(&fp);
-			return 1; //meet error, aborted
-		}
-	}
-	else
-	{
-		printf("Duplicate file.\n");
-		bytes_sent = send(conn_sock, MSG_DUP_FILE, strlen(MSG_DUP_FILE), 0);
-		if (bytes_sent <= 0)
-		{
-			printf("Connection closed\n");
-		}
-		clean_and_restore(&fp);
-		return 1;
-	}
+    // check if file exists, if not create new one, else return error
+    // already at destination folder
+    // echo to client
+    if (stat(recv_data, &st) == -1)
+    { // file does not exist
+        fp = fopen(recv_data, "wb");
+        if (fp == NULL)
+        {
+            printf("File path error\n");
+            clean_and_restore(&fp);
+            return -1;
+        }
+        bytes_sent = send(conn_sock, MSG_RECV, strlen(MSG_RECV), 0); //echo that received file name and no duplicate file on server
+        if (bytes_sent <= 0)
+        {
+            printf("Connection closed\n");
+            clean_and_restore(&fp);
+            return 1; //meet error, aborted
+        }
+    }
+    else
+    {
+        printf("Duplicate file.\n");
+        bytes_sent = send(conn_sock, MSG_DUP_FILE, strlen(MSG_DUP_FILE), 0);
+        if (bytes_sent <= 0)
+        {
+            printf("Connection closed\n");
+        }
+        clean_and_restore(&fp);
+        return 1;
+    }
 
-	printf("File name: %s\n", recv_data);
-	bzero(recv_data, bytes_received); //empty buffer
+    printf("File name: %s\n", recv_data);
+    bzero(recv_data, bytes_received); //empty buffer
 
-	//receives file size
-	bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
-	if (bytes_received <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return 1; //meet error, aborted
-	}
-	else
-		recv_data[bytes_received] = '\0'; // check with client send format
+    //receives file size
+    bytes_received = recv(conn_sock, recv_data, BUFF_SIZE - 1, 0);
+    if (bytes_received <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return 1; //meet error, aborted
+    }
+    else
+        recv_data[bytes_received] = '\0'; // check with client send format
 
-	size_file = atoi(recv_data);
+    size_file = atoi(recv_data);
 
-	printf("File size: %s\n", recv_data);
-	bzero(recv_data, bytes_received); //empty buffer
+    printf("File size: %s\n", recv_data);
+    bzero(recv_data, bytes_received); //empty buffer
 
-	nLeft = size_file % BUFF_SIZE; // cuz file size is not divisible by BUFF_SIZE
-	int loop_size = size_file;
+    nLeft = size_file % BUFF_SIZE; // cuz file size is not divisible by BUFF_SIZE
+    int loop_size = size_file;
 
-	while (loop_size > 0)
-	{
-		idx = 0; // reset idx
+    while (loop_size > 0)
+    {
+        idx = 0; // reset idx
 
-		while (nLeft > 0)
-		{
-			bytes_received = recv(conn_sock, &recv_data[idx], nLeft, 0); // read at missing data index
-			if (bytes_received <= 0)
-			{
-				// Error handler
-				printf("Connection closed. Trying again.\n");
-			}
-			idx += bytes_received; // if larger then socket size
-			nLeft -= bytes_received;
-		}
+        while (nLeft > 0)
+        {
+            bytes_received = recv(conn_sock, &recv_data[idx], nLeft, 0); // read at missing data index
+            if (bytes_received <= 0)
+            {
+                // Error handler
+                printf("Connection closed. Trying again.\n");
+            }
+            idx += bytes_received; // if larger then socket size
+            nLeft -= bytes_received;
+        }
 
-		fwrite(recv_data, 1, idx, fp); //idx is the real length of recv_data
-		bzero(recv_data, sizeof(recv_data));
-		loop_size -= BUFF_SIZE; // decrease unfinished bytes   		-
-		nLeft = BUFF_SIZE;		// reset nLeft
-	}
+        fwrite(recv_data, 1, idx, fp); //idx is the real length of recv_data
+        bzero(recv_data, sizeof(recv_data));
+        loop_size -= BUFF_SIZE; // decrease unfinished bytes   		-
+        nLeft = BUFF_SIZE;      // reset nLeft
+    }
 
-	// echo to client that transmission sucessfully completed
-	bytes_sent = send(conn_sock, MSG_RECV_FILE, strlen(MSG_RECV_FILE), 0);
-	if (bytes_sent <= 0)
-	{
-		printf("Connection closed\n");
-		clean_and_restore(&fp);
-		return 1; //meet error, aborted
-	}
+    // echo to client that transmission sucessfully completed
+    bytes_sent = send(conn_sock, MSG_RECV_FILE, strlen(MSG_RECV_FILE), 0);
+    if (bytes_sent <= 0)
+    {
+        printf("Connection closed\n");
+        clean_and_restore(&fp);
+        return 1; //meet error, aborted
+    }
 
-	// sucessful block
-	fclose(fp);
-	chdir("../.."); //return original folder
+    // sucessful block
+    fclose(fp);
+    chdir("../.."); //return original folder
 
-	return 0;
+    return 0;
 }
 
 /* Client structure */
@@ -389,35 +389,67 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    printf("=== WELCOME TO THE CHATROOM ===\n");
+    int choice = 0;
+    printf("What do you want to do?\n");
+    printf("1. Chatroom\n");
+    printf("2. Send File\n");
+    scanf("%d", &choice);
 
-    while (1)
+    if (choice == 1)
     {
-        socklen_t clilen = sizeof(cli_addr);
-        connfd = accept(listenfd, (struct sockaddr *)&cli_addr, &clilen);
+        printf("=== WELCOME TO THE CHATROOM ===\n");
 
-        /* Check if max clients is reached */
-        if ((cli_count + 1) == MAX_CLIENTS)
+        while (1)
         {
-            printf("Max clients reached. Rejected: ");
-            print_client_addr(cli_addr);
-            printf(":%d\n", cli_addr.sin_port);
+            socklen_t clilen = sizeof(cli_addr);
+            connfd = accept(listenfd, (struct sockaddr *)&cli_addr, &clilen);
+
+            /* Check if max clients is reached */
+            if ((cli_count + 1) == MAX_CLIENTS)
+            {
+                printf("Max clients reached. Rejected: ");
+                print_client_addr(cli_addr);
+                printf(":%d\n", cli_addr.sin_port);
+                close(connfd);
+                continue;
+            }
+
+            /* Client settings */
+            client_t *cli = (client_t *)malloc(sizeof(client_t));
+            cli->address = cli_addr;
+            cli->sockfd = connfd;
+            cli->uid = uid++;
+
+            /* Add client to the queue and fork thread */
+            queue_add(cli);
+            pthread_create(&tid, NULL, &handle_client, (void *)cli);
+
+            /* Reduce CPU usage */
+            sleep(1);
+        }
+    }
+    else if (choice == 2)
+    {
+        int status = 2;
+        while (1)
+        {
+            //accept request
+            socklen_t clilen = sizeof(cli_addr);
+            connfd = accept(listenfd, (struct sockaddr *)&cli_addr, &clilen);
+            printf("You got a connection from %s\n", inet_ntoa(cli_addr.sin_addr)); /* prints client's IP */
+            while (1)
+            {
+                status = recv_file(connfd);
+                if (status != 0)
+                {
+                    break;
+                }
+            }
             close(connfd);
-            continue;
         }
 
-        /* Client settings */
-        client_t *cli = (client_t *)malloc(sizeof(client_t));
-        cli->address = cli_addr;
-        cli->sockfd = connfd;
-        cli->uid = uid++;
-
-        /* Add client to the queue and fork thread */
-        queue_add(cli);
-        pthread_create(&tid, NULL, &handle_client, (void *)cli);
-
-        /* Reduce CPU usage */
-        sleep(1);
+        close(listenfd);
+        return EXIT_SUCCESS;
     }
 
     return EXIT_SUCCESS;
