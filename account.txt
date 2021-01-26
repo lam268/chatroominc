@@ -1,5 +1,5 @@
-quan quan
-lam lam
-long long
-badao badao
-hust hust
+quan
+lam
+long
+badao
+hust

@@ -92,6 +92,7 @@ int send_file(int client_sock, char *file_path)
     }
     else
         recv_data[bytes_received] = '\0';
+    printf("%s",recv_data);
 
     printf("%s\n", recv_data);
     if (strcmp(recv_data, MSG_DUP_FILE) == 0) //file was found on server, duplicate file
@@ -189,28 +190,24 @@ void catch_ctrl_c_and_exit()
 
 void recv_msg_handler()
 {
-    char message[BUFFER_SIZE] = {};
+    char message[BUFF_SIZE] = {};
+    int status = 2;
+    char buff[BUFF_SIZE];
     while (1)
-    {
+    {   
+        memset(message,'\0',BUFF_SIZE);
         int receive = recv(sockfd, message, BUFFER_SIZE, 0);
         if (receive > 0)
-        {   str_overwrite_stdout();
+        {  int length; 
             printf("%s", message);
-            if (strcmp(message,"insert\n") == 0) {
-        int status = 2;
-        char buff[BUFF_SIZE];
-        str_overwrite_stdout();
-            printf("Insert string to send:\n");
-		memset(buff,'\0',(strlen(buff)+1));
-        str_overwrite_stdout();
-		fgets(buff, BUFF_SIZE, stdin);	
-        
-		buff[strlen(buff)-1] = '\0'; //remove trailing newline	
-		status = send_file(sockfd, buff);
-		
-		if(status == 1)
-			break;
-        }
+        //     if (strcmp(message,"Insert string to send:\n") == 0) {   
+		// memset(buff,'\0',(strlen(buff)+1));
+		// fgets(buff, BUFF_SIZE, stdin);	
+		// buff[strlen(buff)-1] = '\0'; //remove trailing newline	
+		// status = send_file(sockfd, buff);		
+		// if(status == 1)
+		// 	break;
+        // }
         }
         else if (receive == 0)
         {

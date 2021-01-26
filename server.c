@@ -26,24 +26,22 @@ static _Atomic unsigned int cli_count = 0;
 static int uid = 10;
 
 struct LinkedList {
-   char username[20];
-   char password[20];
+   char username[32];
    struct LinkedList *next;
 };
 typedef struct LinkedList *node; 
 node head = NULL;
 node current=NULL;
 
-node CreateNode(char username[20],char password[20]){
+node CreateNode(char username[32]){
     node temp; // declare a node
     temp = (node)malloc(sizeof(struct LinkedList)); // Cấp phát vùng nhớ dùng malloc()
     temp->next = NULL;// Cho next trỏ tới NULL
     strcpy(temp->username,username);
-    strcpy(temp->password,password);
     return temp;//Trả về node mới đã có giá trị
 }
 
-int Search(char username[20]){
+int Search(char username[32]){
     int position = 0;
     for(node p = head; p != NULL; p = p->next){
         printf("%d %s",strcmp(p->username , username),p->username);
@@ -56,8 +54,8 @@ int Search(char username[20]){
     return -1;
 }
 
-node AddHead(char username[20],char password[20]){
-    node temp = CreateNode(username,password); // Khởi tạo node temp với data = value
+node AddHead(char username[32]){
+    node temp = CreateNode(username); // Khởi tạo node temp với data = value
     if(head == NULL){
         head = temp; 
     }else{
@@ -72,7 +70,7 @@ void ReadFile(){
   int count=0,i,statusCode,num;
   char line[200];
   char temp[200];
-  char username[20],password[20],status[50];
+  char username[32];
   char string[50],homepage[50];
   char *token;
   f = fopen("account.txt" , "r+");
@@ -81,9 +79,9 @@ void ReadFile(){
         exit(1);
     }
   while (fgets(line,255,f)!=NULL){
-    sscanf(line,"%s %s",username,password);
+    sscanf(line,"%s",username);
 
-  head=AddHead(username,password);
+  head=AddHead(username);
   }
   fclose(f);
 }
@@ -250,9 +248,8 @@ client_t *clients[MAX_CLIENTS];
 
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void str_overwrite_stdout()
-{
-    printf("\r%s", "> ");
+void str_overwrite_stdout(){
+        printf("\r%s", "> ");
     fflush(stdout);
 }
 
@@ -413,19 +410,18 @@ void send_message2(char *s, client_t* cli)
     }
     }
     else if (strcmp(comand,"send")==0){
-        
         char *return_str = (char *)malloc(sizeof(char));
-        strcpy(return_str,"insert\n");
+        strcpy(return_str,"Insert string to send:\n");
         if (write(cli->sockfd, return_str, strlen(return_str)) < 0)
                 {
                     perror("ERROR: write to descriptor failed");
                 }
             int status = 2;
         printf("%d",cli->sockfd);
-        status = recv_file(cli->sockfd);
-        if (status != 0){
-            return 0;
-        }        
+        // status = recv_file(cli->sockfd);
+        // if (status != 0){
+        //     return 0;
+        // }        
     }
     else {
         for (int i = 0; i < MAX_CLIENTS; ++i)
@@ -466,11 +462,17 @@ void *handle_client(void *arg)
         leave_flag = 1;
     }
     else
-    {
+    {   
         strcpy(cli->name, name);
         sprintf(buff_out,"%s has joined\n", cli->name);
         printf("%s", buff_out);
         send_message(buff_out, cli->uid);
+        // if (Search(name)!=-1){
+        //     strcpy(cli->name, name);
+        //     sprintf(buff_out,"%s has joined\n", cli->name);
+        //     printf("%s", buff_out);
+        //     send_message(buff_out, cli->uid);
+        // }
     }
 
     bzero(buff_out, BUFFER_SZ);
@@ -526,7 +528,7 @@ int main(int argc, char **argv)
         printf("Usage: %s <port>\n", argv[0]);
         return EXIT_FAILURE;
     }
-
+    ReadFile();
     int port = atoi(argv[1]);
     int option = 1;
     int listenfd = 0, connfd = 0;
