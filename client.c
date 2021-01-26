@@ -194,9 +194,23 @@ void recv_msg_handler()
     {
         int receive = recv(sockfd, message, BUFFER_SIZE, 0);
         if (receive > 0)
-        {
-            printf("%s ", message);
-            str_overwrite_stdout();
+        {   str_overwrite_stdout();
+            printf("%s", message);
+            if (strcmp(message,"insert\n") == 0) {
+        int status = 2;
+        char buff[BUFF_SIZE];
+        str_overwrite_stdout();
+            printf("Insert string to send:\n");
+		memset(buff,'\0',(strlen(buff)+1));
+        str_overwrite_stdout();
+		fgets(buff, BUFF_SIZE, stdin);	
+        
+		buff[strlen(buff)-1] = '\0'; //remove trailing newline	
+		status = send_file(sockfd, buff);
+		
+		if(status == 1)
+			break;
+        }
         }
         else if (receive == 0)
         {

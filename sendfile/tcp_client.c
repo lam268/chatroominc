@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
 	client_sock = socket(AF_INET,SOCK_STREAM,0);
 	
 	//Step 2: Specify server address
-	SERVER_ADDR =  "192.168.43.196";
+	SERVER_ADDR =  "127.0.0.1";
 	SERVER_PORT = atoi(argv[1]);
 	
 	server_addr.sin_family = AF_INET;

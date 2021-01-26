@@ -25,6 +25,69 @@
 static _Atomic unsigned int cli_count = 0;
 static int uid = 10;
 
+struct LinkedList {
+   char username[20];
+   char password[20];
+   struct LinkedList *next;
+};
+typedef struct LinkedList *node; 
+node head = NULL;
+node current=NULL;
+
+node CreateNode(char username[20],char password[20]){
+    node temp; // declare a node
+    temp = (node)malloc(sizeof(struct LinkedList)); // Cấp phát vùng nhớ dùng malloc()
+    temp->next = NULL;// Cho next trỏ tới NULL
+    strcpy(temp->username,username);
+    strcpy(temp->password,password);
+    return temp;//Trả về node mới đã có giá trị
+}
+
+int Search(char username[20]){
+    int position = 0;
+    for(node p = head; p != NULL; p = p->next){
+        printf("%d %s",strcmp(p->username , username),p->username);
+        if(strcmp(p->username , username)==0){
+            current=p;
+            return position;
+        }
+        position++;
+    }
+    return -1;
+}
+
+node AddHead(char username[20],char password[20]){
+    node temp = CreateNode(username,password); // Khởi tạo node temp với data = value
+    if(head == NULL){
+        head = temp; 
+    }else{
+        temp->next = head; 
+        head = temp; 
+    }
+    return head;
+}
+
+void ReadFile(){
+  FILE  *f;
+  int count=0,i,statusCode,num;
+  char line[200];
+  char temp[200];
+  char username[20],password[20],status[50];
+  char string[50],homepage[50];
+  char *token;
+  f = fopen("account.txt" , "r+");
+  if (f == NULL) {
+        printf("Error in reading file!\n");
+        exit(1);
+    }
+  while (fgets(line,255,f)!=NULL){
+    sscanf(line,"%s %s",username,password);
+
+  head=AddHead(username,password);
+  }
+  fclose(f);
+}
+
 void clean_and_restore(FILE **fp)
 {
     if (*fp != NULL)
@@ -297,7 +360,7 @@ void send_err_mess(char *s, int uid)
 
     pthread_mutex_unlock(&clients_mutex);
 }
-void send_message2(char *s, int uid)
+void send_message2(char *s, client_t* cli)
 {   char *send_user;
     char *comand;
     char *message;
@@ -338,7 +401,7 @@ void send_message2(char *s, int uid)
     {
         if (clients[i])
         {
-            if (clients[i]->uid != uid)
+            if (clients[i]->uid != cli->uid)
             {
                 if (write(clients[i]->sockfd, send_user, strlen(send_user)) < 0)
                 {
@@ -349,12 +412,27 @@ void send_message2(char *s, int uid)
         }
     }
     }
+    else if (strcmp(comand,"send")==0){
+        
+        char *return_str = (char *)malloc(sizeof(char));
+        strcpy(return_str,"insert\n");
+        if (write(cli->sockfd, return_str, strlen(return_str)) < 0)
+                {
+                    perror("ERROR: write to descriptor failed");
+                }
+            int status = 2;
+        printf("%d",cli->sockfd);
+        status = recv_file(cli->sockfd);
+        if (status != 0){
+            return 0;
+        }        
+    }
     else {
         for (int i = 0; i < MAX_CLIENTS; ++i)
     {
         if (clients[i])
         {
-            if (clients[i]->uid != uid && strcmp(clients[i]->name,comand)==0)
+            if (clients[i]->uid != cli->uid && strcmp(clients[i]->name,comand)==0)
             {   check=10;
                 if (write(clients[i]->sockfd, send_user, strlen(send_user)) < 0)
                 {
@@ -409,7 +487,7 @@ void *handle_client(void *arg)
         {
             if (strlen(buff_out) > 0)
             {
-                send_message2(buff_out, cli->uid);
+                send_message2(buff_out, cli);
 
                 str_trim_lf(buff_out, strlen(buff_out));
                 printf("%s -> %s\n", buff_out, cli->name);
@@ -485,14 +563,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    int choice = 0;
-    printf("What do you want to do?\n");
-    printf("1. Chatroom\n");
-    printf("2. Send File\n");
-    scanf("%d", &choice);
 
-    if (choice == 1)
-    {
         printf("=== WELCOME TO THE CHATROOM ===\n");
 
         while (1)
@@ -523,30 +594,11 @@ int main(int argc, char **argv)
             /* Reduce CPU usage */
             sleep(1);
         }
-    }
-    else if (choice == 2)
-    {
-        int status = 2;
-        while (1)
-        {
-            //accept request
-            socklen_t clilen = sizeof(cli_addr);
-            connfd = accept(listenfd, (struct sockaddr *)&cli_addr, &clilen);
-            printf("You got a connection from %s\n", inet_ntoa(cli_addr.sin_addr)); /* prints client's IP */
-            while (1)
-            {
-                status = recv_file(connfd);
-                if (status != 0)
-                {
-                    break;
-                }
-            }
-            close(connfd);
-        }
 
+        close(connfd);
         close(listenfd);
-        return EXIT_SUCCESS;
-    }
+
+
 
     return EXIT_SUCCESS;
 }
