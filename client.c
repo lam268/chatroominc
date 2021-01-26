@@ -9,7 +9,8 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <signal.h>
-
+#include <sys/stat.h>
+#define BUFF_SIZE 2048
 #define MAX_CLIENT 100
 #define BUFFER_SIZE 2048
 #define MSG_DUP_FILE "Error: File is existet on server."
@@ -223,7 +224,7 @@ void send_msg_handler()
         }
         else
         {
-            sprintf(message, "%s: %s\n", name, buffer);
+            sprintf(message, "%s:%s\n", name, buffer);
             send(sockfd, message, strlen(message), 0);
         }
 

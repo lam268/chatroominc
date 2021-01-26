@@ -275,6 +275,102 @@ void send_message(char *s, int uid)
     pthread_mutex_unlock(&clients_mutex);
 }
 
+void send_err_mess(char *s, int uid)
+{
+    pthread_mutex_lock(&clients_mutex);
+
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i])
+        {
+            if (clients[i]->uid == uid)
+            {
+                if (write(clients[i]->sockfd, s, strlen(s)) < 0)
+                {
+                    perror("ERROR: write to descriptor failed");
+                    break;
+                }
+                break;
+            }
+        }
+    }
+
+    pthread_mutex_unlock(&clients_mutex);
+}
+void send_message2(char *s, int uid)
+{   char *send_user;
+    char *comand;
+    char *message;
+    int m=0;
+    int n=0;
+    int k=0;
+    int temp;
+    int check=0;
+    send_user=(char *)malloc(sizeof(char));
+    comand=(char *)malloc(sizeof(char));
+    message=(char *)malloc(sizeof(char));
+
+    pthread_mutex_lock(&clients_mutex);
+    for (int i =0; i < strlen(s) ; i++){
+        if(s[i]=='/'){
+            temp=i;
+            break;
+        }
+        send_user[m]=s[i];
+        m++;
+    }
+    printf("%s\n",send_user);
+    for (int i =temp+1; i < strlen(s) ; i++){
+        if(s[i]==' '){
+            temp=i;
+            break;
+        }
+        comand[n]=s[i];
+        n++;
+    }
+    for (int i =temp+1; i < strlen(s) ; i++){
+        message[k]=s[i];
+        k++;
+    }
+    strcat(send_user,message);
+    if (strcmp(comand,"all")==0){
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i])
+        {
+            if (clients[i]->uid != uid)
+            {
+                if (write(clients[i]->sockfd, send_user, strlen(send_user)) < 0)
+                {
+                    perror("ERROR: write to descriptor failed");
+                    break;
+                }
+            }
+        }
+    }
+    }
+    else {
+        for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i])
+        {
+            if (clients[i]->uid != uid && strcmp(clients[i]->name,comand)==0)
+            {   check=10;
+                if (write(clients[i]->sockfd, send_user, strlen(send_user)) < 0)
+                {
+                    perror("ERROR: write to descriptor failed");
+                    break;
+                }
+            }
+        }
+    }
+    // if (check==0) {
+    //     send_err_mess("No user found\n",uid);
+    // }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+}
+
 /* Handle all communication with the client */
 void *handle_client(void *arg)
 {
@@ -294,7 +390,7 @@ void *handle_client(void *arg)
     else
     {
         strcpy(cli->name, name);
-        sprintf(buff_out, "%s has joined\n", cli->name);
+        sprintf(buff_out,"%s has joined\n", cli->name);
         printf("%s", buff_out);
         send_message(buff_out, cli->uid);
     }
@@ -313,7 +409,7 @@ void *handle_client(void *arg)
         {
             if (strlen(buff_out) > 0)
             {
-                send_message(buff_out, cli->uid);
+                send_message2(buff_out, cli->uid);
 
                 str_trim_lf(buff_out, strlen(buff_out));
                 printf("%s -> %s\n", buff_out, cli->name);
