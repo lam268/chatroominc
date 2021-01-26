@@ -67,6 +67,28 @@ node AddHead(char username[20],char password[20]){
     return head;
 }
 
+char *extract_file_name(char *file_path)
+{
+    int i;
+    int n = strlen(file_path);
+    char *file_name;
+    for (i = n - 1; i >= 0; --i)
+    {
+        if (file_path[i] == '/')
+            break;
+    }
+
+    if (i == 0) //current directory so that no '/'
+        return file_path;
+
+    file_name = (char *)malloc((n - i) * sizeof(char));
+    memcpy(file_name, &file_path[i + 1], n - i);
+
+    return file_name;
+}
+
+int send_file(int client_sock, char *file_path)
+
 void ReadFile(){
   FILE  *f;
   int count=0,i,statusCode,num;
@@ -144,6 +166,8 @@ int recv_file(int conn_sock)
         clean_and_restore(&fp);
         return -1;
     }
+
+    printf("%s",recv_data);
 
     // check if file exists, if not create new one, else return error
     // already at destination folder
@@ -413,7 +437,8 @@ void send_message2(char *s, client_t* cli)
     }
     }
     else if (strcmp(comand,"send")==0){
-        
+        char *name = (char *)malloc(sizeof(char));
+        strcpy(name,message);
         char *return_str = (char *)malloc(sizeof(char));
         strcpy(return_str,"insert\n");
         if (write(cli->sockfd, return_str, strlen(return_str)) < 0)
@@ -425,7 +450,7 @@ void send_message2(char *s, client_t* cli)
         status = recv_file(cli->sockfd);
         if (status != 0){
             return 0;
-        }        
+        }     
     }
     else {
         for (int i = 0; i < MAX_CLIENTS; ++i)

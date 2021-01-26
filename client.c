@@ -93,7 +93,6 @@ int send_file(int client_sock, char *file_path)
     else
         recv_data[bytes_received] = '\0';
 
-    printf("%s\n", recv_data);
     if (strcmp(recv_data, MSG_DUP_FILE) == 0) //file was found on server, duplicate file
         return -1;
     bzero(recv_data, sizeof(recv_data));
@@ -200,7 +199,7 @@ void recv_msg_handler()
         int status = 2;
         char buff[BUFF_SIZE];
         str_overwrite_stdout();
-            printf("Insert string to send:\n");
+        printf("Insert string to send:\n");
 		memset(buff,'\0',(strlen(buff)+1));
         str_overwrite_stdout();
 		fgets(buff, BUFF_SIZE, stdin);	
